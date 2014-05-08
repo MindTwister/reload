@@ -11,6 +11,10 @@ import (
 )
 
 func root(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "OPTIONS" {
+		w.Header().Add("Access-Control-Allow-Origin","*")
+		return
+	}
 	broadCast("Update")
 }
 
@@ -20,10 +24,10 @@ var ping string = "ping"
 
 var script = `
 	(function(){
-		var ws = new WebSocket("ws://%v");
+		var ws = new WebSocket("ws://%v/ws");
 		ws.onmessage = function(d) {
-			if(d.data == "Update") {
-				window.location.refresh();
+			if(JSON.parse(d.data) == "Update") {
+				window.location.reload();
 			}
 		}
 	})();
@@ -34,7 +38,6 @@ func keepAlive(c *websocket.Conn) {
 		c.SetDeadline(time.Now().Add(10 * time.Second))
 		err := websocket.JSON.Send(c, ping)
 		if err != nil {
-			log.Println(err)
 			delete(clients, c)
 			break
 		}
